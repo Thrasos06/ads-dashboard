@@ -12,7 +12,7 @@ import { CampaignTable } from "@/features/campaigns/components/campaign-table";
 
 export function CampaignsClient() {
   const [filters, setFilters] = useState(defaultDashboardFilters);
-  const { data } = useCampaignPerformance(filters);
+  const { data, isLoading } = useCampaignPerformance(filters);
 
   return (
     <div className="space-y-6">
@@ -29,7 +29,10 @@ export function CampaignsClient() {
       />
 
       <FiltersBar filters={filters} onChange={setFilters} />
-      {data ? <CampaignTable campaigns={data} /> : <div className="surface-panel h-80 animate-pulse rounded-[2rem] bg-white/70" />}
+      {data ? <CampaignTable campaigns={data} /> : <div className="surface-panel h-80 animate-pulse rounded-[2rem] bg-white/70" aria-hidden="true" />}
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {isLoading ? "Refreshing campaign performance table." : "Campaign performance table loaded."}
+      </p>
     </div>
   );
 }

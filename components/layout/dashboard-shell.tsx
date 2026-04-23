@@ -3,8 +3,8 @@
 import Link from "next/link";
 import type { Route } from "next";
 import { usePathname } from "next/navigation";
-import { type ComponentType, type ReactNode, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { type ComponentType, type KeyboardEvent, type ReactNode, useEffect, useId, useRef, useState } from "react";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { BarChart3, FolderKanban, LayoutDashboard, Menu, Sparkles, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
         </div>
       </div>
 
-      <nav className="space-y-2">
+      <nav aria-label="Primary" className="space-y-2">
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
@@ -46,7 +46,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
           if (item.disabled) {
             return (
-              <div key={item.href} className={className}>
+              <div key={item.href} className={className} aria-disabled="true">
                 <span className="flex items-center gap-3">
                   <Icon className="size-4" />
                   {item.label}
@@ -56,7 +56,7 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
           }
 
           return (
-            <Link key={item.href} href={item.href} onClick={onNavigate} className={className}>
+            <Link key={item.href} href={item.href} onClick={onNavigate} className={className} aria-current={active ? "page" : undefined}>
               <span className="flex items-center gap-3">
                 <Icon className="size-4" />
                 {item.label}
@@ -79,6 +79,64 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
 export function DashboardShell({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
+  const shouldReduceMotion = useReducedMotion();
+  const drawerId = useId();
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLElement>(null);
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+
+    function handleKeyDown(event: globalThis.KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleKeyDown);
+      triggerRef.current?.focus();
+    };
+  }, [isOpen]);
+
+  function handleDrawerKeyDown(event: KeyboardEvent<HTMLElement>) {
+    if (event.key !== "Tab") {
+      return;
+    }
+
+    const focusableElements = drawerRef.current?.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    );
+
+    if (!focusableElements || focusableElements.length === 0) {
+      return;
+    }
+
+    const firstElement = focusableElements[0];
+    const lastElement = focusableElements[focusableElements.length - 1];
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault();
+      lastElement.focus();
+      return;
+    }
+
+    if (!event.shiftKey && document.activeElement === lastElement) {
+      event.preventDefault();
+      firstElement.focus();
+    }
+  }
 
   return (
     <div className="min-h-screen">
@@ -98,13 +156,25 @@ export function DashboardShell({ children }: { children: ReactNode }) {
                 <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Workspace</p>
                 <p className="text-sm font-semibold text-slate-900">Northstar Media</p>
               </div>
-              <Button variant="outline" size="icon" className="lg:hidden" onClick={() => setIsOpen(true)} aria-label="Open navigation">
+              <Button
+                ref={triggerRef}
+                variant="outline"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setIsOpen(true)}
+                aria-label="Open navigation"
+                aria-expanded={isOpen}
+                aria-controls={drawerId}
+                aria-haspopup="dialog"
+              >
                 <Menu className="size-5" />
               </Button>
             </div>
           </header>
 
-          <main className="pb-8">{children}</main>
+          <main id="main-content" className="pb-8" tabIndex={-1}>
+            {children}
+          </main>
         </div>
       </div>
 
@@ -114,21 +184,27 @@ export function DashboardShell({ children }: { children: ReactNode }) {
             <motion.button
               type="button"
               className="fixed inset-0 z-40 bg-slate-950/45 lg:hidden"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={shouldReduceMotion ? false : { opacity: 0 }}
+              animate={shouldReduceMotion ? undefined : { opacity: 1 }}
+              exit={shouldReduceMotion ? undefined : { opacity: 0 }}
               onClick={() => setIsOpen(false)}
               aria-label="Close navigation overlay"
             />
             <motion.aside
+              id={drawerId}
+              ref={drawerRef}
               className="surface-panel fixed inset-y-4 left-4 z-50 w-[min(86vw,320px)] rounded-[2rem] p-6 lg:hidden"
-              initial={{ x: -40, opacity: 0 }}
-              animate={{ x: 0, opacity: 1 }}
-              exit={{ x: -40, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              initial={shouldReduceMotion ? false : { x: -40, opacity: 0 }}
+              animate={shouldReduceMotion ? undefined : { x: 0, opacity: 1 }}
+              exit={shouldReduceMotion ? undefined : { x: -40, opacity: 0 }}
+              transition={shouldReduceMotion ? undefined : { duration: 0.2 }}
+              role="dialog"
+              aria-modal="true"
+              aria-label="Primary navigation"
+              onKeyDown={handleDrawerKeyDown}
             >
               <div className="mb-5 flex justify-end">
-                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close navigation">
+                <Button ref={closeButtonRef} variant="ghost" size="icon" onClick={() => setIsOpen(false)} aria-label="Close navigation">
                   <X className="size-5" />
                 </Button>
               </div>

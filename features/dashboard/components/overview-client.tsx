@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Download, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
@@ -16,6 +16,7 @@ import { PerformanceCharts } from "@/features/dashboard/components/performance-c
 export function OverviewClient() {
   const [filters, setFilters] = useState(defaultDashboardFilters);
   const { data, isLoading } = useDashboardOverview(filters);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <div className="space-y-6">
@@ -43,14 +44,17 @@ export function OverviewClient() {
         {(data?.metrics ?? Array.from({ length: 8 })).map((metric, index) => (
           <motion.div
             key={metric?.label ?? index}
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.28, delay: index * 0.03 }}
+            initial={shouldReduceMotion ? false : { opacity: 0, y: 18 }}
+            animate={shouldReduceMotion ? undefined : { opacity: 1, y: 0 }}
+            transition={shouldReduceMotion ? undefined : { duration: 0.28, delay: index * 0.03 }}
           >
             {metric ? (
               <MetricCard metric={metric} />
             ) : (
-              <div className="surface-panel h-[148px] animate-pulse rounded-3xl bg-white/70" />
+              <div
+                className={`surface-panel h-[148px] rounded-3xl bg-white/70 ${shouldReduceMotion ? "" : "animate-pulse"}`}
+                aria-hidden="true"
+              />
             )}
           </motion.div>
         ))}
@@ -59,7 +63,10 @@ export function OverviewClient() {
       {data ? <PerformanceCharts overview={data} /> : null}
       {data ? <CreativeInsights overview={data} /> : null}
 
-      {isLoading ? <p className="text-sm text-slate-500">Refreshing dashboard metrics...</p> : null}
+      <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
+        {isLoading ? "Refreshing dashboard metrics." : "Dashboard metrics loaded."}
+      </p>
+      {isLoading ? <p className="text-sm text-slate-500" aria-hidden="true">Refreshing dashboard metrics...</p> : null}
     </div>
   );
 }

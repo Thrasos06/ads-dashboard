@@ -1,0 +1,82 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 216 33% 97%;
+    --foreground: 222 42% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 42% 11%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 42% 11%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 215 28% 93%;
+    --secondary-foreground: 222 47% 11%;
+    --muted: 214 32% 95%;
+    --muted-foreground: 215 16% 40%;
+    --accent: 195 85% 94%;
+    --accent-foreground: 200 98% 24%;
+    --destructive: 0 72% 51%;
+    --border: 214 27% 88%;
+    --input: 214 27% 88%;
+    --ring: 221 83% 53%;
+    --success: 151 55% 42%;
+    --warning: 34 94% 51%;
+    --chart-1: 221 83% 53%;
+    --chart-2: 189 94% 43%;
+    --chart-3: 263 70% 50%;
+    --chart-4: 151 55% 42%;
+    --chart-5: 24 95% 53%;
+    --radius: 1rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(56, 189, 248, 0.15), transparent 28%),
+      radial-gradient(circle at top right, rgba(37, 99, 235, 0.12), transparent 24%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.8), rgba(248, 250, 252, 1));
+    min-height: 100vh;
+  }
+
+  ::selection {
+    background: rgba(37, 99, 235, 0.18);
+  }
+}
+
+@layer base {
+  body {
+    font-family: var(--font-body), sans-serif;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading), sans-serif;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .surface-panel {
+    @apply border border-white/60 bg-white/80 shadow-glow backdrop-blur-xl;
+  }
+
+  .surface-subtle {
+    @apply border border-slate-200/70 bg-white/70 backdrop-blur-md;
+  }
+}

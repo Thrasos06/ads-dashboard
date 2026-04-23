@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+dist
+.turbo
+coverage
+*.log
+.env
+.env.local
+.env.*.local
+tsconfig.tsbuildinfo
+.agents/skills/

@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { Manrope, Plus_Jakarta_Sans } from "next/font/google";
 
-import { QueryProvider } from "@/components/providers/query-provider";
-
 import "./globals.css";
 
 const headingFont = Plus_Jakarta_Sans({
@@ -30,7 +28,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         >
           Skip to main content
         </a>
-        <QueryProvider>{children}</QueryProvider>
+        {children}
       </body>
     </html>
   );

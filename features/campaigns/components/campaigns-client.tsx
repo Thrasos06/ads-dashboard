@@ -1,38 +1,33 @@
 "use client";
 
-import { Download } from "lucide-react";
 import { useState } from "react";
 
 import { FiltersBar } from "@/components/dashboard/filters-bar";
-import { DashboardPageHeader } from "@/components/layout/dashboard-page-header";
-import { Button } from "@/components/ui/button";
 import { defaultDashboardFilters } from "@/lib/constants";
 import { useCampaignPerformance } from "@/hooks/use-campaign-performance";
 import { CampaignTable } from "@/features/campaigns/components/campaign-table";
+import type { CampaignTableRow } from "@/types/ads";
 
-export function CampaignsClient() {
+function isDefaultFilterSelection(filters: typeof defaultDashboardFilters) {
+  return (
+    filters.dateRange === defaultDashboardFilters.dateRange &&
+    filters.platform === defaultDashboardFilters.platform &&
+    filters.objective === defaultDashboardFilters.objective &&
+    filters.status === defaultDashboardFilters.status
+  );
+}
+
+export function CampaignsClient({ initialCampaigns }: { initialCampaigns: CampaignTableRow[] }) {
   const [filters, setFilters] = useState(defaultDashboardFilters);
-  const { data, isLoading } = useCampaignPerformance(filters);
+  const { data, isLoading } = useCampaignPerformance(filters, isDefaultFilterSelection(filters) ? initialCampaigns : undefined);
 
   return (
-    <div className="space-y-6">
-      <DashboardPageHeader
-        eyebrow="Campaign Performance"
-        title="Manage performance across channels"
-        description="A sortable, filterable campaign table with portfolio-quality structure that can later be swapped to a real API or warehouse-backed dataset with minimal UI churn."
-        actions={
-          <Button>
-            <Download className="mr-2 size-4" />
-            Export CSV
-          </Button>
-        }
-      />
-
+    <>
       <FiltersBar filters={filters} onChange={setFilters} />
       {data ? <CampaignTable campaigns={data} /> : <div className="surface-panel h-80 animate-pulse rounded-[2rem] bg-white/70" aria-hidden="true" />}
       <p className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {isLoading ? "Refreshing campaign performance table." : "Campaign performance table loaded."}
       </p>
-    </div>
+    </>
   );
 }

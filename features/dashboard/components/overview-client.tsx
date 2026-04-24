@@ -1,43 +1,40 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { motion, useReducedMotion } from "framer-motion";
-import { Download, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
 
 import { FiltersBar } from "@/components/dashboard/filters-bar";
-import { DashboardPageHeader } from "@/components/layout/dashboard-page-header";
-import { Button } from "@/components/ui/button";
 import { defaultDashboardFilters } from "@/lib/constants";
 import { useDashboardOverview } from "@/hooks/use-dashboard-overview";
 import { CreativeInsights } from "@/features/dashboard/components/creative-insights";
 import { MetricCard } from "@/features/dashboard/components/metric-card";
-import { PerformanceCharts } from "@/features/dashboard/components/performance-charts";
+import type { DashboardOverview } from "@/types/ads";
 
-export function OverviewClient() {
+const PerformanceCharts = dynamic(
+  () => import("@/features/dashboard/components/performance-charts").then((mod) => mod.PerformanceCharts),
+  {
+    ssr: false,
+    loading: () => <div className="surface-panel h-[420px] animate-pulse rounded-[2rem] bg-white/70" aria-hidden="true" />,
+  },
+);
+
+function isDefaultFilterSelection(filters: typeof defaultDashboardFilters) {
+  return (
+    filters.dateRange === defaultDashboardFilters.dateRange &&
+    filters.platform === defaultDashboardFilters.platform &&
+    filters.objective === defaultDashboardFilters.objective &&
+    filters.status === defaultDashboardFilters.status
+  );
+}
+
+export function OverviewClient({ initialOverview }: { initialOverview: DashboardOverview }) {
   const [filters, setFilters] = useState(defaultDashboardFilters);
-  const { data, isLoading } = useDashboardOverview(filters);
+  const { data, isLoading } = useDashboardOverview(filters, isDefaultFilterSelection(filters) ? initialOverview : undefined);
   const shouldReduceMotion = useReducedMotion();
 
   return (
-    <div className="space-y-6">
-      <DashboardPageHeader
-        eyebrow="Overview"
-        title="Advertising performance at a glance"
-        description="A portfolio-grade overview built like a production analytics product, with reusable filters, validated mock data, and query-driven charts ready for a real backend later."
-        actions={
-          <>
-            <Button variant="outline">
-              <SlidersHorizontal className="mr-2 size-4" />
-              Saved view
-            </Button>
-            <Button>
-              <Download className="mr-2 size-4" />
-              Export snapshot
-            </Button>
-          </>
-        }
-      />
-
+    <>
       <FiltersBar filters={filters} onChange={setFilters} />
 
       <section className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
@@ -67,6 +64,6 @@ export function OverviewClient() {
         {isLoading ? "Refreshing dashboard metrics." : "Dashboard metrics loaded."}
       </p>
       {isLoading ? <p className="text-sm text-slate-500" aria-hidden="true">Refreshing dashboard metrics...</p> : null}
-    </div>
+    </>
   );
 }
